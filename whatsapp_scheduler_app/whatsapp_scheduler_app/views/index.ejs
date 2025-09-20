@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>WhatsApp Scheduler</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f7f7f7;
+    }
+    h1 {
+      text-align: center;
+    }
+    section {
+      background: #fff;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 6px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    table th, table td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
+    table th {
+      background: #f0f0f0;
+    }
+    form.inline {
+      display: inline;
+    }
+    input[type="text"], textarea, select, input[type="date"], input[type="time"] {
+      padding: 6px;
+      margin: 4px 0;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    input[type="submit"] {
+      padding: 6px 12px;
+      background-color: #4caf50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    input[type="submit"]:hover {
+      background-color: #45a049;
+    }
+  </style>
+</head>
+<body>
+  <h1>WhatsApp Scheduler</h1>
+  <section>
+    <h2>Add Number</h2>
+    <form method="POST" action="/numbers/add">
+      <label>Phone Number (with country code):</label>
+      <input type="text" name="number" required placeholder="Ex: 5521999999999">
+      <label>Group (optional):</label>
+      <input type="text" name="group" placeholder="Ex: homens">
+      <input type="submit" value="Add Number">
+    </form>
+  </section>
+  <section>
+    <h2>Numbers</h2>
+    <% if (numbers.length === 0) { %>
+      <p>No numbers added yet.</p>
+    <% } else { %>
+      <table>
+        <tr>
+          <th>ID</th>
+          <th>Number</th>
+          <th>Group</th>
+          <th>Actions</th>
+        </tr>
+        <% numbers.forEach(n => { %>
+          <tr>
+            <td><%= n.id %></td>
+            <td><%= n.number %></td>
+            <td><%= n.group_name || '-' %></td>
+            <td>
+              <form class="inline" method="POST" action="/numbers/delete/<%= n.id %>">
+                <input type="submit" value="Delete" onclick="return confirm('Delete this number?');">
+              </form>
+            </td>
+          </tr>
+        <% }); %>
+      </table>
+    <% } %>
+  </section>
+  <section>
+    <h2>Add Schedule</h2>
+    <form method="POST" action="/schedules/add">
+      <label>Message:</label>
+      <textarea name="message" rows="3" required></textarea>
+      <label>Date:</label>
+      <input type="date" name="sendDate" required>
+      <label>Time:</label>
+      <input type="time" name="sendTime" required>
+      <label>Send to Group (optional):</label>
+      <select name="group">
+        <option value="">-- Select group or leave blank --</option>
+        <% groups.forEach(g => { %>
+          <option value="<%= g %>"><%= g %></option>
+        <% }); %>
+      </select>
+      <p style="margin-top:4px;">If no group selected, select individual numbers (Ctrl+Click to select multiple):</p>
+      <select name="numbers" multiple size="5" style="height:auto;">
+        <% numbers.forEach(n => { %>
+          <option value="<%= n.id %>"><%= n.number %> (<%= n.group_name || 'no group' %>)</option>
+        <% }); %>
+      </select>
+      <input type="submit" value="Add Schedule">
+    </form>
+  </section>
+  <section>
+    <h2>Schedules</h2>
+    <% if (schedules.length === 0) { %>
+      <p>No schedules created yet.</p>
+    <% } else { %>
+      <table>
+        <tr>
+          <th>ID</th>
+          <th>Message</th>
+          <th>Send At</th>
+          <th>Target</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+        <% schedules.forEach(s => { %>
+          <tr>
+            <td><%= s.id %></td>
+            <td><%= s.message %></td>
+            <td><%= new Date(s.send_at).toLocaleString() %></td>
+            <td>
+              <% if (s.group_name) { %>
+                Group: <%= s.group_name %>
+              <% } else if (s.numbers) { %>
+                Individuals
+              <% } else { %>
+                -
+              <% } %>
+            </td>
+            <td><%= s.sent ? 'Sent' : 'Pending' %></td>
+            <td>
+              <form class="inline" method="POST" action="/schedules/delete/<%= s.id %>">
+                <input type="submit" value="Delete" onclick="return confirm('Delete this schedule?');">
+              </form>
+            </td>
+          </tr>
+        <% }); %>
+      </table>
+    <% } %>
+  </section>
+</body>
+</html>
